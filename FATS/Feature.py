@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from FATS import featureFunction
 
 
+
 class FeatureSpace:
     """
     This Class is a wrapper class, to allow user select the

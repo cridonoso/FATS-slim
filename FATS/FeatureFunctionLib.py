@@ -3,8 +3,8 @@ import sys
 import time
 import math
 import bisect
-
 import numpy as np
+
 import pandas as pd
 from scipy import stats
 from scipy.optimize import minimize
@@ -15,6 +15,7 @@ from scipy.interpolate import interp1d
 from .Base import Base
 from . import lomb
 
+np.seterr(divide='ignore', invalid='ignore')
 
 class Amplitude(Base):
     """Half the difference between the maximum and the minimum magnitude"""
@@ -92,13 +93,13 @@ class Autocor_length(Base):
     def fit(self, data):
 
         magnitude = data[0]
-        AC = stattools.acf(magnitude, nlags=self.nlags)
+        AC = stattools.acf(magnitude, nlags=self.nlags, fft=False)
         k = next((index for index, value in
                  enumerate(AC) if value < np.exp(-1)), None)
 
         while k is None:
             self.nlags = self.nlags + 100
-            AC = stattools.acf(magnitude, nlags=self.nlags)
+            AC = stattools.acf(magnitude, nlags=self.nlags, fft=False)
             k = next((index for index, value in
                       enumerate(AC) if value < np.exp(-1)), None)
 
@@ -388,6 +389,7 @@ class SmallKurtosis(Base):
     def fit(self, data):
         magnitude = data[0]
         n = len(magnitude)
+        if n < 4: return 0.
         mean = np.mean(magnitude)
         std = np.std(magnitude)
 
@@ -539,10 +541,10 @@ class FluxPercentileRatioMid20(Base):
         sorted_data = np.sort(magnitude)
         lc_length = len(sorted_data)
 
-        F_60_index = math.ceil(0.60 * lc_length)
-        F_40_index = math.ceil(0.40 * lc_length)
-        F_5_index = math.ceil(0.05 * lc_length)
-        F_95_index = math.ceil(0.95 * lc_length)
+        F_60_index = math.floor(0.60 * lc_length)
+        F_40_index = math.floor(0.40 * lc_length)
+        F_5_index = math.floor(0.05 * lc_length)
+        F_95_index = math.floor(0.95 * lc_length)
 
         F_40_60 = sorted_data[F_60_index] - sorted_data[F_40_index]
         F_5_95 = sorted_data[F_95_index] - sorted_data[F_5_index]
@@ -561,10 +563,10 @@ class FluxPercentileRatioMid35(Base):
         sorted_data = np.sort(magnitude)
         lc_length = len(sorted_data)
 
-        F_325_index = math.ceil(0.325 * lc_length)
-        F_675_index = math.ceil(0.675 * lc_length)
-        F_5_index = math.ceil(0.05 * lc_length)
-        F_95_index = math.ceil(0.95 * lc_length)
+        F_325_index = math.floor(0.325 * lc_length)
+        F_675_index = math.floor(0.675 * lc_length)
+        F_5_index = math.floor(0.05 * lc_length)
+        F_95_index = math.floor(0.95 * lc_length)
 
         F_325_675 = sorted_data[F_675_index] - sorted_data[F_325_index]
         F_5_95 = sorted_data[F_95_index] - sorted_data[F_5_index]
@@ -583,10 +585,10 @@ class FluxPercentileRatioMid50(Base):
         sorted_data = np.sort(magnitude)
         lc_length = len(sorted_data)
 
-        F_25_index = math.ceil(0.25 * lc_length)
-        F_75_index = math.ceil(0.75 * lc_length)
-        F_5_index = math.ceil(0.05 * lc_length)
-        F_95_index = math.ceil(0.95 * lc_length)
+        F_25_index = math.floor(0.25 * lc_length)
+        F_75_index = math.floor(0.75 * lc_length)
+        F_5_index = math.floor(0.05 * lc_length)
+        F_95_index = math.floor(0.95 * lc_length)
 
         F_25_75 = sorted_data[F_75_index] - sorted_data[F_25_index]
         F_5_95 = sorted_data[F_95_index] - sorted_data[F_5_index]
@@ -605,10 +607,10 @@ class FluxPercentileRatioMid65(Base):
         sorted_data = np.sort(magnitude)
         lc_length = len(sorted_data)
 
-        F_175_index = math.ceil(0.175 * lc_length)
-        F_825_index = math.ceil(0.825 * lc_length)
-        F_5_index = math.ceil(0.05 * lc_length)
-        F_95_index = math.ceil(0.95 * lc_length)
+        F_175_index = math.floor(0.175 * lc_length)
+        F_825_index = math.floor(0.825 * lc_length)
+        F_5_index = math.floor(0.05 * lc_length)
+        F_95_index = math.floor(0.95 * lc_length)
 
         F_175_825 = sorted_data[F_825_index] - sorted_data[F_175_index]
         F_5_95 = sorted_data[F_95_index] - sorted_data[F_5_index]
@@ -627,9 +629,9 @@ class FluxPercentileRatioMid80(Base):
         sorted_data = np.sort(magnitude)
         lc_length = len(sorted_data)
 
-        F_10_index = math.ceil(0.10 * lc_length)
-        F_90_index = math.ceil(0.90 * lc_length)
-        F_5_index = math.ceil(0.05 * lc_length)
+        F_10_index = math.floor(0.10 * lc_length)
+        F_90_index = math.floor(0.90 * lc_length)
+        F_5_index = math.floor(0.05 * lc_length)
         F_95_index = math.floor(0.95 * lc_length)
 
         F_10_90 = sorted_data[F_90_index] - sorted_data[F_10_index]
@@ -650,8 +652,8 @@ class PercentDifferenceFluxPercentile(Base):
 
         sorted_data = np.sort(magnitude)
         lc_length = len(sorted_data)
-        F_5_index = math.ceil(0.05 * lc_length)
-        F_95_index = math.ceil(0.95 * lc_length)
+        F_5_index = math.floor(0.05 * lc_length)
+        F_95_index = math.floor(0.95 * lc_length)
         F_5_95 = sorted_data[F_95_index] - sorted_data[F_5_index]
 
         percent_difference = F_5_95 / median_data
@@ -901,9 +903,6 @@ class CAR_sigma(Base):
 
         sigma = parameters[0]
         tau = parameters[1]
-        # b = parameters[1] #comment it to do 2 pars estimation
-        # tau = params(1,1);
-        # sigma = sqrt(2*var(x)/tau);
 
         b = np.mean(x) / tau
         epsilon = 1e-300
@@ -914,16 +913,6 @@ class CAR_sigma(Base):
         x_hat = []
         a = []
         x_ast = []
-
-        # Omega = np.zeros((num_datos,1))
-        # x_hat = np.zeros((num_datos,1))
-        # a = np.zeros((num_datos,1))
-        # x_ast = np.zeros((num_datos,1))
-
-        # Omega[0]=(tau*(sigma**2))/2.
-        # x_hat[0]=0.
-        # a[0]=0.
-        # x_ast[0]=x[0] - b*tau
 
         Omega.append((tau * (sigma ** 2)) / 2.)
         x_hat.append(0.)
@@ -945,18 +934,18 @@ class CAR_sigma(Base):
                 Omega[0] * (1 - (a_new ** 2)) + ((a_new ** 2)) * Omega[i - 1] *
                 (1 - (Omega[i - 1] / (Omega[i - 1] + error_vars[i - 1]))))
 
-            # x_ast[i]=x[i] - b*tau
-            # x_hat[i]=a_new*x_hat[i-1] + (a_new*Omega[i-1]/(Omega[i-1] +
-            # error_vars[i-1]))*(x_ast[i-1]-x_hat[i-1])
-            # Omega[i]=Omega[0]*(1-(a_new**2)) + ((a_new**2))*Omega[i-1]*
-            # ( 1 - (Omega[i-1]/(Omega[i-1]+ error_vars[i-1])))
 
-            loglik_inter = np.log(
-                ((2 * np.pi * (Omega[i] + error_vars[i])) ** -0.5) *
-                (np.exp(-0.5 * (((x_hat[i] - x_ast[i]) ** 2) /
-                 (Omega[i] + error_vars[i]))) + epsilon))
+            term_00 = 2.*np.pi*(Omega[i] + error_vars[i])
 
-            loglik = loglik + loglik_inter
+            if term_00 < 0: continue
+
+            term_01 = np.power(term_00, -0.5)
+            term_10 = np.power((x_hat[i] - x_ast[i]), 2)
+            term_11 = np.divide(term_10, Omega[i] + error_vars[i] )
+            term_12 = np.exp(-0.5 * term_11) + epsilon
+
+
+            loglik += np.log(term_01*term_12)
 
             if(loglik <= cte_neg):
                 print('CAR lik --> inf')
@@ -970,14 +959,16 @@ class CAR_sigma(Base):
         x0 = [10, 0.5]
         bnds = ((0, 100), (0.0001, 100))
 
-        res = minimize(self.CAR_Lik, x0, args=(time, data, error),
-                       method='L-BFGS-B', bounds=bnds)
-        # options={'disp': True}
-        sigma = res.x[0]
-        global tau
-        tau = res.x[1]
-        return sigma
-
+        try:
+            res = minimize(self.CAR_Lik, x0, args=(time, data, error),
+                           method='L-BFGS-B', bounds=bnds)
+            # options={'disp': True}
+            sigma = res.x[0]
+            global tau
+            tau = res.x[1]
+            return sigma
+        except:
+            return 0
     # def getAtt(self):
     #     return CAR_sigma.tau
 
@@ -1005,7 +996,8 @@ class CAR_tau(Base):
         try:
             return tau
         except:
-            print("error: please run CAR_sigma first to generate values for CAR_tau")
+            return 0.
+            #print("error: please run CAR_sigma first to generate values for CAR_tau")
 
 
 class CAR_mean(Base):
@@ -1021,7 +1013,7 @@ class CAR_mean(Base):
         try:
             return np.mean(magnitude) / tau
         except:
-            print("error: please run CAR_sigma first to generate values for CAR_mean")
+            return 0.#print("error: please run CAR_sigma first to generate values for CAR_mean")
 
 
 class Freq1_harmonics_amplitude_0(Base):
@@ -1403,10 +1395,15 @@ class StructureFunction_index_21(Base):
         time_int = np.linspace(np.min(time), np.max(time), Np)
         mag_int = f(time_int)
 
+
         for tau in np.arange(1, Nsf):
-            sf1[tau-1] = np.mean(np.power(np.abs(mag_int[0:Np-tau] - mag_int[tau:Np]) , 1.0))
-            sf2[tau-1] = np.mean(np.abs(np.power(np.abs(mag_int[0:Np-tau] - mag_int[tau:Np]) , 2.0)))
-            sf3[tau-1] = np.mean(np.abs(np.power(np.abs(mag_int[0:Np-tau] - mag_int[tau:Np]) , 3.0)))
+            term0 = np.nan_to_num(mag_int[0:Np-tau])
+            term1 = np.nan_to_num(mag_int[tau:Np])
+            sf1[tau-1] = np.mean(np.power(np.abs(term0 - term1) , 1.0))
+            sf2[tau-1] = np.mean(np.abs(np.power(np.abs(term0 - term1) , 2.0)))
+            sf3[tau-1] = np.mean(np.abs(np.power(np.abs(term0 - term1) , 3.0)))
+
+
         sf1_log = np.log10(np.trim_zeros(sf1))
         sf2_log = np.log10(np.trim_zeros(sf2))
         sf3_log = np.log10(np.trim_zeros(sf3))
