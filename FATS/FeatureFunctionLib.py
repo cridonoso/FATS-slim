@@ -1059,10 +1059,20 @@ class Freq1_harmonics_amplitude_0(Base):
             popts = []
 
             for j in range(4):
-                popt, pcov = curve_fit(yfunc((j+1)*fundamental_Freq), time, magnitude)
-                Atemp.append(np.sqrt(popt[0]**2+popt[1]**2))
-                PHtemp.append(np.arctan(popt[1] / popt[0]))
-                popts.append(popt)
+                try:
+                    popt, pcov = curve_fit(yfunc((j+1)*fundamental_Freq), time, magnitude)
+                except:
+                    popt = np.zeros(3)
+                    pcov = np.zeros([3,3])
+
+
+                term0 = np.sqrt(popt[0]**2+popt[1]**2)
+                term1 = np.arctan(popt[1] / popt[0])
+                term2 = popt
+
+                Atemp.append(term0)
+                PHtemp.append(term1)
+                popts.append(term2)
 
             A.append(Atemp)
             PH.append(PHtemp)
